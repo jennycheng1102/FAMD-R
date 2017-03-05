@@ -1,0 +1,98 @@
+#factor analysis of mixed data
+library(RSNNS)
+library(FactoMineR)
+library(lattice)
+library(psych)
+library(plsdepot)
+library(pheatmap)
+
+rm(list = ls())
+
+A.vanilla = read.csv("data/college_graduation_data.csv", header = TRUE)
+A = read.csv("data/college_graduation_data.csv", header = TRUE)
+
+#Remove the high school because there's too many categories
+A = A[, -which(names(A) %in% "HIGH.SCHOOL")]
+#Remove major due to many categories as well
+#This is partially covered by college, anyways
+A = A[, -which(names(A) %in% "MAJOR")]
+#Simplify the ethnicity category
+A$ETHNICITY = as.character(A$ETHNICITY)
+A$ETHNICITY[which((A$ETHNICITY != "White") & (A$ETHNICITY != "Asian") & 
+                    (A$ETHNICITY != "Black/African American") & (A$ETHNICITY != "Hispanic/Latino"))] = "Other"
+A$ETHNICITY = as.factor(A$ETHNICITY)
+
+#Use codes for variables to make plotting more comprehensible
+orig_names = names(A)
+names(A) = c("COL", "AGE", "GEN", "ETH", "CIT", "RES", "HSGPA", "SAT", "SATM", "SATV", "HOU",
+             "FAA", "NIN", "SCH", "MER", "GRA", "SLO", "PLO", "WOR", "FGPA", "FENR",
+             "FCOM", "FATT", "FEAR", "SGPA", "SCOM", "SATT", "SEAR", "DCR")
+
+#Handle the missing values in NIN
+A$NIN = factor(A$NIN, exclude = NULL)
+
+
+A.FAMD.full = FAMD(A, ncp = 60, graph = FALSE)
+A.FAMD = FAMD(A, ncp = 43, graph = FALSE)
+#plot.FAMD(A.FAMD, choix = "ind", axes = c(1, 2), cex = 0.5)
+postscript(file = "individuals_12.eps", height = 5, width = 5, horizontal = FALSE)
+plot.FAMD(A.FAMD, choix = "ind", axes = c(1, 2), cex = 0.5, invisible = "quali", title = "Representation of Individuals", lab.ind = 0, habillage = 1)
+dev.off()
+#dev.copy2eps(file = "individuals_12.eps")
+postscript(file = "relationship_square_12.eps", height = 5, width = 5, horizontal = FALSE)
+plot.FAMD(A.FAMD, choix = "var", axes = c(1, 2), cex = 0.5, title = "Relationship Square")
+dev.off()
+#dev.copy2eps(file = "relationship_square_12.eps")
+postscript(file = "correlation_circle_12.eps", height = 5, width = 5, horizontal = FALSE)
+plot.FAMD(A.FAMD, choix = "quanti", axes = c(1, 2), cex = 0.5, title = "Correlation Circle")
+dev.off()
+#dev.copy2eps(file = "correlation_circle_12.eps")
+postscript(file = "categories_12.eps", height = 5, width = 5, horizontal = FALSE)
+plot.FAMD(A.FAMD, choix = "quali", axes = c(1, 2), cex = 0.5, title = "Representation of Categories", habillage = 1)
+dev.off()
+#dev.copy2eps(file = "categories_12.eps")
+#plot.FAMD(A.FAMD, choix = "ind", axes = c(1, 2), cex = 0.5, invisible = "quali", lab.ind = 0, habillage = 1)
+
+postscript(file = "PC_ind_var.eps", height = 5, width = 7, horizontal = FALSE)
+plot(A.FAMD$eig[,2], type = 'n', xlab = "Principle Component Number", ylab = "Individual Variance", main = "Principle Component Individual Variance")
+lines(A.FAMD$eig[,2])
+dev.off()
+postscript(file = "PC_cumul_var.eps", height = 5, width = 7, horizontal = FALSE)
+plot(A.FAMD$eig[,3], type = 'n', xlab = "Principle Component Number", ylab = "Cumulative Variance", main = "Principle Component Cumulative Variance")
+lines(A.FAMD$eig[,3], col = 'black', lty = 1)
+lines(rep(80, nrow(A.FAMD$eig)), col = 'red', lty = 2)
+legend(45, 40, c("From PCs", "80%"), col = c("black", "red"), lty = 1:2)
+dev.off()
+
+
+Z = A.FAMD$var$correlation
+Z = rapply(Z, f=function(x) ifelse(is.nan(x),0,x), how="replace" )
+Z = matrix(unlist(Z), nrow = nrow(A.FAMD$var$correlation))
+rownames(Z) = rownames(A.FAMD$var$cos2)
+colnames(Z) = colnames(A.FAMD$var$cos2)
+#heatmap(Z, Rowv = NA, Colv = NA, main = "Correlation of Var")
+#cc = topo.colors(nrow(A.FAMD$var$cos2))
+#heatmap(A.FAMD$var$cos2, col = topo.colors(nrow(A.FAMD$var$contrib)), RowSideColors = cc, Rowv = NA, Colv = NA, main = "cos2 of Var")
+#cc = topo.colors(nrow(A.FAMD$var$contrib))
+#heatmap(A.FAMD$var$contrib, col = topo.colors(nrow(A.FAMD$var$contrib)), RowSideColors = cc, Rowv = NA, Colv = NA, main = "Contribution of Var")
+
+#pheatmap(A.FAMD$var$cos2, cluster_rows = 0, cluster_cols = 0, scale = "column", main = "cos2. of Vars.")
+#pheatmap(A.FAMD$var$contrib, cluster_rows = 0, cluster_cols = 0, scale = "row", main = "Contrib. of Vars.")
+pheatmap(A.FAMD$var$coord, cluster_rows = 0, cluster_cols = 0, scale = "none", main = "Coord. of Vars.")
+pheatmap(A.FAMD$quanti.var$cos2, cluster_rows = 0, cluster_cols = 0, main = "cos2 of Quant. Vars.")
+pheatmap(A.FAMD$quali.var$cos2, cluster_rows = 0, cluster_cols = 0, main = "cos2 of Quali. Vars.")
+#pheatmap(Z, cluster_rows = 0, cluster_cols = 0, scale = "column", main = "Correlation of Vars.")
+z = sample(nrow(A), 100)
+pheatmap(A.FAMD$ind$contrib[z,], cluster_rows = 0, cluster_cols = 0, scale = "column")
+pheatmap(A.FAMD$ind$cos2[z,], cluster_rows = 0, cluster_cols = 0, scale = "column")
+
+#Do some linear regression to determine combination of college performance?
+#Output is factor so inputs should be factor I guess?
+#A$FGPA = factor(trunc(A$FGPA + 0.5))
+#A$FCOM = factor(as.numeric(cut(A$FCOM, breaks = 5)) / 5)
+#A$FATT = factor(as.numeric(cut(A$FATT, breaks = 5)) * 4)
+#A$FEAR = factor(as.numeric(cut(A$FEAR, breaks = 5)) * 4)
+#A$SGPA = factor(trunc(A$SGPA + 0.5))
+#A$SCOM = factor(as.numeric(cut(A$SCOM, breaks = 5)) / 5)
+#A$SATT = factor(as.numeric(cut(A$SATT, breaks = 5)) * 4)
+#A$SEAR = factor(as.numeric(cut(A$SEAR, breaks = 5)) * 4)
