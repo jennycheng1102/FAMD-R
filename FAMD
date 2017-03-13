@@ -1,4 +1,3 @@
-#factor analysis of mixed data
 library(RSNNS)
 library(FactoMineR)
 library(lattice)
@@ -11,16 +10,23 @@ rm(list = ls())
 A.vanilla = read.csv("data/college_graduation_data.csv", header = TRUE)
 A = read.csv("data/college_graduation_data.csv", header = TRUE)
 
-#Remove the high school because there's too many categories
-A = A[, -which(names(A) %in% "HIGH.SCHOOL")]
-#Remove major due to many categories as well
-#This is partially covered by college, anyways
-A = A[, -which(names(A) %in% "MAJOR")]
-#Simplify the ethnicity category
-A$ETHNICITY = as.character(A$ETHNICITY)
-A$ETHNICITY[which((A$ETHNICITY != "White") & (A$ETHNICITY != "Asian") & 
-                    (A$ETHNICITY != "Black/African American") & (A$ETHNICITY != "Hispanic/Latino"))] = "Other"
-A$ETHNICITY = as.factor(A$ETHNICITY)
+#Remove 'high school','major' because they have too much categories;
+A=A[,-which(names(A) %in% 'HIGH.SCHOOL')]
+A=A[,-which(names(A) %in% 'MAJOR')]
+
+#Simplify 'ethnicity'
+A$EHNICITY=as.character(A$ETHNICITY)
+A$ETHNICITY[which((A$ETHNICITY!='White')&(A$ETHNICITY!='Hispanic/Latino')&(A$ETHNICITY != "Asian") &
+(A$ETHNICITY != "Black/African American") ]='Other'
+A$ETHNICITY=as.factor(A$ETHNICITY)
+
+#Handle the missing values in NIN
+A$NIN = factor(A$NIN, exclude = NULL)
+#FAMD: study the relationship between all the variables
+A.FAMD.full=FAMD(A,ncp=60,graph=FALSE)
+A.FAMD=FAMD(A,ncp=60,grapgh=FALSE)
+POSTSCRIPT(FILE)
+
 
 #Use codes for variables to make plotting more comprehensible
 orig_names = names(A)
