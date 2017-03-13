@@ -49,15 +49,14 @@ postscript(file = "relationship_square_12.eps", height = 5, width = 5, horizonta
 plot.FAMD(A.FAMD, choix = "var", axes = c(1, 2), cex = 0.5, title = "Relationship Square")
 dev.off()
 #dev.copy2eps(file = "relationship_square_12.eps")
+#choix='quanti' for circle of correlation
 postscript(file = "correlation_circle_12.eps", height = 5, width = 5, horizontal = FALSE)
 plot.FAMD(A.FAMD, choix = "quanti", axes = c(1, 2), cex = 0.5, title = "Correlation Circle")
 dev.off()
-#dev.copy2eps(file = "correlation_circle_12.eps")
+#Categorical variables colors according to different categories of this variable
 postscript(file = "categories_12.eps", height = 5, width = 5, horizontal = FALSE)
 plot.FAMD(A.FAMD, choix = "quali", axes = c(1, 2), cex = 0.5, title = "Representation of Categories", habillage = 1)
 dev.off()
-#dev.copy2eps(file = "categories_12.eps")
-#plot.FAMD(A.FAMD, choix = "ind", axes = c(1, 2), cex = 0.5, invisible = "quali", lab.ind = 0, habillage = 1)
 
 postscript(file = "PC_ind_var.eps", height = 5, width = 7, horizontal = FALSE)
 plot(A.FAMD$eig[,2], type = 'n', xlab = "Principle Component Number", ylab = "Individual Variance", main = "Principle Component Individual Variance")
@@ -92,13 +91,3 @@ z = sample(nrow(A), 100)
 pheatmap(A.FAMD$ind$contrib[z,], cluster_rows = 0, cluster_cols = 0, scale = "column")
 pheatmap(A.FAMD$ind$cos2[z,], cluster_rows = 0, cluster_cols = 0, scale = "column")
 
-#Do some linear regression to determine combination of college performance?
-#Output is factor so inputs should be factor I guess?
-#A$FGPA = factor(trunc(A$FGPA + 0.5))
-#A$FCOM = factor(as.numeric(cut(A$FCOM, breaks = 5)) / 5)
-#A$FATT = factor(as.numeric(cut(A$FATT, breaks = 5)) * 4)
-#A$FEAR = factor(as.numeric(cut(A$FEAR, breaks = 5)) * 4)
-#A$SGPA = factor(trunc(A$SGPA + 0.5))
-#A$SCOM = factor(as.numeric(cut(A$SCOM, breaks = 5)) / 5)
-#A$SATT = factor(as.numeric(cut(A$SATT, breaks = 5)) * 4)
-#A$SEAR = factor(as.numeric(cut(A$SEAR, breaks = 5)) * 4)
